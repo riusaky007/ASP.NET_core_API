@@ -16,14 +16,35 @@ namespace JsonApiDotNetCoreExample.Migrations
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
                 .HasAnnotation("ProductVersion", "1.1.0-rtm-22752");
 
-            modelBuilder.Entity("JsonApiDotNetCoreExample.Models.TodoItem", b =>
+            modelBuilder.Entity("JsonApiDotNetCoreExample.Models.Person", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.HasKey("Id");
 
+                    b.ToTable("People");
+                });
+
+            modelBuilder.Entity("JsonApiDotNetCoreExample.Models.TodoItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int?>("OwnerId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
                     b.ToTable("TodoItems");
+                });
+
+            modelBuilder.Entity("JsonApiDotNetCoreExample.Models.TodoItem", b =>
+                {
+                    b.HasOne("JsonApiDotNetCoreExample.Models.Person", "Owner")
+                        .WithMany("TodoItems")
+                        .HasForeignKey("OwnerId");
                 });
         }
     }
