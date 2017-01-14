@@ -21,6 +21,10 @@ namespace JsonApiDotNetCoreExample.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<string>("FirstName");
+
+                    b.Property<string>("LastName");
+
                     b.HasKey("Id");
 
                     b.ToTable("People");
@@ -30,6 +34,8 @@ namespace JsonApiDotNetCoreExample.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Description");
 
                     b.Property<int?>("OwnerId");
 
