@@ -37,6 +37,8 @@ namespace JsonApiDotNetCoreExample.Migrations
 
                     b.Property<string>("Description");
 
+                    b.Property<long>("Ordinal");
+
                     b.Property<int>("OwnerId");
 
                     b.HasKey("Id");
