@@ -41,6 +41,8 @@ namespace JsonApiDotNetCoreExample.Migrations
 
                     b.Property<string>("Description");
 
+                    b.Property<Guid>("GuidProperty");
+
                     b.Property<long>("Ordinal");
 
                     b.Property<int?>("OwnerId");
