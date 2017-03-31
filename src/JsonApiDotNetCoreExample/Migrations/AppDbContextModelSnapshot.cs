@@ -35,15 +35,21 @@ namespace JsonApiDotNetCoreExample.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<int?>("AssigneeId");
+
                     b.Property<Guid?>("CollectionId");
 
                     b.Property<string>("Description");
+
+                    b.Property<Guid>("GuidProperty");
 
                     b.Property<long>("Ordinal");
 
                     b.Property<int?>("OwnerId");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssigneeId");
 
                     b.HasIndex("CollectionId");
 
@@ -70,6 +76,10 @@ namespace JsonApiDotNetCoreExample.Migrations
 
             modelBuilder.Entity("JsonApiDotNetCoreExample.Models.TodoItem", b =>
                 {
+                    b.HasOne("JsonApiDotNetCoreExample.Models.Person", "Assignee")
+                        .WithMany("AssignedTodoItems")
+                        .HasForeignKey("AssigneeId");
+
                     b.HasOne("JsonApiDotNetCoreExample.Models.TodoItemCollection", "Collection")
                         .WithMany("TodoItems")
                         .HasForeignKey("CollectionId");
