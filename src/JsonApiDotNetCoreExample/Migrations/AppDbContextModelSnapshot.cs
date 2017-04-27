@@ -16,6 +16,18 @@ namespace JsonApiDotNetCoreExample.Migrations
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
                 .HasAnnotation("ProductVersion", "1.1.1");
 
+            modelBuilder.Entity("JsonApiDotNetCoreExample.Models.CamelCasedModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("CompoundAttr");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CamelCasedModels");
+                });
+
             modelBuilder.Entity("JsonApiDotNetCoreExample.Models.Person", b =>
                 {
                     b.Property<int>("Id")
