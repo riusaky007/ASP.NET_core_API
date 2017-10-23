@@ -1,11 +1,9 @@
-using System;
 using System.Threading.Tasks;
 using JsonApiDotNetCore.Builders;
 using JsonApiDotNetCore.Internal;
 using JsonApiDotNetCore.Models;
 using JsonApiDotNetCore.Models.Operations;
 using JsonApiDotNetCore.Serialization;
-using Newtonsoft.Json;
 
 namespace JsonApiDotNetCore.Services.Operations.Processors
 {
@@ -51,7 +49,6 @@ namespace JsonApiDotNetCore.Services.Operations.Processors
 
         public async Task<Operation> ProcessAsync(Operation operation)
         {
-            Console.WriteLine(JsonConvert.SerializeObject(operation));
             var model = (T)_deSerializer.DocumentToObject(operation.DataObject);
 
             if (string.IsNullOrWhiteSpace(operation?.DataObject?.Id?.ToString()))
