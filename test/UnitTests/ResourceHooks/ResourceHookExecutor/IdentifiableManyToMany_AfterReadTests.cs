@@ -1,69 +1,24 @@
-using JsonApiDotNetCore.Builders;
 using JsonApiDotNetCore.Services;
 using JsonApiDotNetCoreExample.Models;
 using Moq;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using Bogus;
 
 namespace UnitTests.ResourceHooks
 {
-
-    public class IdentifiableManyToMany_AfterReadTests : ResourceHooksTestBase
+    public class IdentifiableManyToMany_AfterReadTests : HooksTestsSetup
     {
-        public IdentifiableManyToMany_AfterReadTests()
-        {
-            // Build() exposes the static ResourceGraphBuilder.Instance member, which 
-            // is consumed by ResourceDefinition class.
-            new ResourceGraphBuilder()
-                .AddResource<Article>()
-                .AddResource<IdentifiableArticleTag>()
-                .AddResource<Tag>()
-                .Build();
-        }
-
-        (List<Article>, List<IdentifiableArticleTag>, List<Tag>) CreateDummyData()
-        {
-            var tagsSubset = _tagFaker.Generate(3).ToList();
-            var joinsSubSet = _identifiableArticleTagFaker.Generate(3).ToList();
-            var articleTagsSubset = _articleFaker.Generate();
-            articleTagsSubset.IdentifiableArticleTags = joinsSubSet;
-            for (int i = 0; i < 3; i++)
-            {
-                joinsSubSet[i].Article = articleTagsSubset;
-                joinsSubSet[i].Tag = tagsSubset[i];
-            }
-            var allTags = _tagFaker.Generate(3).ToList().Concat(tagsSubset).ToList();
-            var completeJoin = _identifiableArticleTagFaker.Generate(6).ToList();
-
-            var articleWithAllTags = _articleFaker.Generate();
-            articleWithAllTags.IdentifiableArticleTags = joinsSubSet;
-
-            for (int i = 0; i < 6; i++)
-            {
-                completeJoin[i].Article = articleWithAllTags;
-                completeJoin[i].Tag = allTags[i];
-            }
-
-            var allJoins = joinsSubSet.Concat(completeJoin).ToList();
-            var articles = new List<Article>() { articleTagsSubset, articleWithAllTags };
-            return (articles, allJoins, allTags);
-        }
-
-
         [Fact]
         public void AfterRead()
         {
             // arrange
-            var articleDiscovery = SetDiscoverableHooks<Article>();
-            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>();
-            var tagDiscovery = SetDiscoverableHooks<Tag>();
-
+            var articleDiscovery = SetDiscoverableHooks<Article>(AllHooks, NoHooks);
+            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(AllHooks, NoHooks);
+            var tagDiscovery = SetDiscoverableHooks<Tag>(AllHooks, NoHooks);
             (var contextMock, var hookExecutor, var articleResourceMock,
                 var joinResourceMock, var tagResourceMock) = CreateTestObjects(articleDiscovery, joinDiscovery, tagDiscovery);
-
-            (var articles, var joins, var tags) = CreateDummyData();
+            (var articles, var joins, var tags) = CreateIdentifiableManyToManyData();
 
             // act
             hookExecutor.AfterRead(articles, ResourceAction.Get);
@@ -79,14 +34,12 @@ namespace UnitTests.ResourceHooks
         public void AfterRead_Without_Parent_Hook_Implemented()
         {
             // arrange
-            var articleDiscovery = SetDiscoverableHooks<Article>(new ResourceHook[0]);
-            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>();
-            var tagDiscovery = SetDiscoverableHooks<Tag>();
-
+            var articleDiscovery = SetDiscoverableHooks<Article>(NoHooks, NoHooks);
+            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(AllHooks, NoHooks);
+            var tagDiscovery = SetDiscoverableHooks<Tag>(AllHooks, NoHooks);
             (var contextMock, var hookExecutor, var articleResourceMock,
                 var joinResourceMock, var tagResourceMock) = CreateTestObjects(articleDiscovery, joinDiscovery, tagDiscovery);
-
-            (var articles, var joins, var tags) = CreateDummyData();
+            (var articles, var joins, var tags) = CreateIdentifiableManyToManyData();
 
             // act
             hookExecutor.AfterRead(articles, ResourceAction.Get);
@@ -98,38 +51,57 @@ namespace UnitTests.ResourceHooks
         }
 
         [Fact]
-        public void AfterRead_Without_Children_After_Hooks_Implemented()
+        public void AfterRead_Without_Children_Hooks_Implemented()
         {
             // arrange
-            var articleDiscovery = SetDiscoverableHooks<Article>();
-            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(new ResourceHook[0]);
-            var tagDiscovery = SetDiscoverableHooks<Tag>(new ResourceHook[0]);
+            var articleDiscovery = SetDiscoverableHooks<Article>(AllHooks, NoHooks);
+            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(NoHooks, NoHooks);
+            var tagDiscovery = SetDiscoverableHooks<Tag>(AllHooks, NoHooks);
 
             (var contextMock, var hookExecutor, var articleResourceMock,
                 var joinResourceMock, var tagResourceMock) = CreateTestObjects(articleDiscovery, joinDiscovery, tagDiscovery);
 
-            (var articles, var joins, var tags) = CreateDummyData();
+            (var articles, var joins, var tags) = CreateIdentifiableManyToManyData();
 
             // act
             hookExecutor.AfterRead(articles, ResourceAction.Get);
 
             // assert
             articleResourceMock.Verify(rd => rd.AfterRead(articles, ResourceAction.Get, false), Times.Once());
+            tagResourceMock.Verify(rd => rd.AfterRead(It.Is<IEnumerable<Tag>>((collection) => !collection.Except(tags).Any()), ResourceAction.Get, true), Times.Once());
             VerifyNoOtherCalls(articleResourceMock, joinResourceMock, tagResourceMock);
         }
 
         [Fact]
-        public void AfterRead_Without_Any_Children_Hooks_Implemented()
+        public void AfterRead_Without_Grand_Children_Hooks_Implemented()
         {
             // arrange
-            var articleDiscovery = SetDiscoverableHooks<Article>();
-            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(new ResourceHook[0]);
-            var tagDiscovery = SetDiscoverableHooks<Tag>(new ResourceHook[0]);
-
+            var articleDiscovery = SetDiscoverableHooks<Article>(AllHooks, NoHooks);
+            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(AllHooks, NoHooks);
+            var tagDiscovery = SetDiscoverableHooks<Tag>(NoHooks, NoHooks);
             (var contextMock, var hookExecutor, var articleResourceMock,
                 var joinResourceMock, var tagResourceMock) = CreateTestObjects(articleDiscovery, joinDiscovery, tagDiscovery);
+            (var articles, var joins, var tags) = CreateIdentifiableManyToManyData();
 
-            (var articles, var joins, var tags) = CreateDummyData();
+            // act
+            hookExecutor.AfterRead(articles, ResourceAction.Get);
+
+            // assert
+            articleResourceMock.Verify(rd => rd.AfterRead(articles, ResourceAction.Get, false), Times.Once());
+            joinResourceMock.Verify(rd => rd.AfterRead(It.Is<IEnumerable<IdentifiableArticleTag>>((collection) => !collection.Except(joins).Any()), ResourceAction.Get, true), Times.Once());
+            VerifyNoOtherCalls(articleResourceMock, joinResourceMock, tagResourceMock);
+        }
+
+        [Fact]
+        public void AfterRead_Without_Any_Descendant_Hooks_Implemented()
+        {
+            // arrange
+            var articleDiscovery = SetDiscoverableHooks<Article>(AllHooks, NoHooks);
+            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(NoHooks, NoHooks);
+            var tagDiscovery = SetDiscoverableHooks<Tag>(NoHooks, NoHooks);
+            (var contextMock, var hookExecutor, var articleResourceMock,
+                var joinResourceMock, var tagResourceMock) = CreateTestObjects(articleDiscovery, joinDiscovery, tagDiscovery);
+            (var articles, var joins, var tags) = CreateIdentifiableManyToManyData();
 
             // act
             hookExecutor.AfterRead(articles, ResourceAction.Get);
@@ -143,14 +115,12 @@ namespace UnitTests.ResourceHooks
         public void AfterRead_Without_Any_Hook_Implemented()
         {
             // arrange
-            var articleDiscovery = SetDiscoverableHooks<Article>(new ResourceHook[0]);
-            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(new ResourceHook[0]);
-            var tagDiscovery = SetDiscoverableHooks<Tag>(new ResourceHook[0]);
-
+            var articleDiscovery = SetDiscoverableHooks<Article>(NoHooks, NoHooks);
+            var joinDiscovery = SetDiscoverableHooks<IdentifiableArticleTag>(NoHooks, NoHooks);
+            var tagDiscovery = SetDiscoverableHooks<Tag>(NoHooks, NoHooks);
             (var contextMock, var hookExecutor, var articleResourceMock,
                 var joinResourceMock, var tagResourceMock) = CreateTestObjects(articleDiscovery, joinDiscovery, tagDiscovery);
-
-            (var articles, var joins, var tags) = CreateDummyData();
+            (var articles, var joins, var tags) = CreateIdentifiableManyToManyData();
 
             // act
             hookExecutor.AfterRead(articles, ResourceAction.Get);
