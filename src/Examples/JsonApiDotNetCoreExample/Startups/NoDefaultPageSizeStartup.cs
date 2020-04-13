@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using JsonApiDotNetCoreExample.Data;
-using Microsoft.EntityFrameworkCore;
-using JsonApiDotNetCore.Extensions;
-using System.Reflection;
+using JsonApiDotNetCore.Configuration;
 
 namespace JsonApiDotNetCoreExample
 {
@@ -15,20 +11,11 @@ namespace JsonApiDotNetCoreExample
     {
         public NoDefaultPageSizeStartup(IWebHostEnvironment env) : base(env) { }
 
-        public override void ConfigureServices(IServiceCollection services)
+        protected override void ConfigureJsonApiOptions(JsonApiOptions options)
         {
-            var mvcBuilder = services.AddMvcCore();
-            services
-                .AddDbContext<AppDbContext>(options => options.UseNpgsql(GetDbConnectionString()), ServiceLifetime.Transient)
-                .AddJsonApi(options => {
-                    options.Namespace = "api/v1";
-                    options.IncludeTotalRecordCount = true;
-                    options.LoadDatabaseValues = true;
-                    options.AllowClientGeneratedIds = true;
-                    options.DefaultPageSize = 0;
-                },
-                discovery => discovery.AddAssembly(Assembly.Load(nameof(JsonApiDotNetCoreExample))),
-                mvcBuilder: mvcBuilder);
+            base.ConfigureJsonApiOptions(options);
+
+            options.DefaultPageSize = 0;
         }
     }
 }
