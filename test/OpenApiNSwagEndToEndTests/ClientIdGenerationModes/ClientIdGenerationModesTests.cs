@@ -29,23 +29,24 @@ public sealed class ClientIdGenerationModesTests
     public async Task Cannot_create_resource_without_ID_when_supplying_ID_is_required()
     {
         // Arrange
-        Player player = _fakers.Player.Generate();
+        Player newPlayer = _fakers.Player.Generate();
 
         using HttpClient httpClient = _testContext.Factory.CreateClient();
         ClientIdGenerationModesClient apiClient = new(httpClient);
 
-        // Act
-        Func<Task<PlayerPrimaryResponseDocument?>> action = () => ApiResponse.TranslateAsync(() => apiClient.PostPlayerAsync(null, new PlayerPostRequestDocument
+        var requestBody = new PlayerPostRequestDocument
         {
             Data = new PlayerDataInPostRequest
             {
-                Id = null!,
                 Attributes = new PlayerAttributesInPostRequest
                 {
-                    UserName = player.UserName
+                    UserName = newPlayer.UserName
                 }
             }
-        }));
+        };
+
+        // Act
+        Func<Task<PlayerPrimaryResponseDocument?>> action = () => ApiResponse.TranslateAsync(() => apiClient.PostPlayerAsync(null, requestBody));
 
         // Assert
         ExceptionAssertions<JsonSerializationException> assertion = await action.Should().ThrowExactlyAsync<JsonSerializationException>();
@@ -56,33 +57,35 @@ public sealed class ClientIdGenerationModesTests
     public async Task Can_create_resource_with_ID_when_supplying_ID_is_required()
     {
         // Arrange
-        Player player = _fakers.Player.Generate();
-        player.Id = Guid.NewGuid();
+        Player newPlayer = _fakers.Player.Generate();
+        newPlayer.Id = Guid.NewGuid();
 
         using HttpClient httpClient = _testContext.Factory.CreateClient();
         ClientIdGenerationModesClient apiClient = new(httpClient);
 
-        // Act
-        PlayerPrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostPlayerAsync(null, new PlayerPostRequestDocument
+        var requestBody = new PlayerPostRequestDocument
         {
             Data = new PlayerDataInPostRequest
             {
-                Id = player.StringId!,
+                Id = newPlayer.StringId!,
                 Attributes = new PlayerAttributesInPostRequest
                 {
-                    UserName = player.UserName
+                    UserName = newPlayer.UserName
                 }
             }
-        }));
+        };
+
+        // Act
+        PlayerPrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostPlayerAsync(null, requestBody));
 
         // Assert
         document.Should().BeNull();
 
         await _testContext.RunOnDatabaseAsync(async dbContext =>
         {
-            Player playerInDatabase = await dbContext.Players.FirstWithIdAsync(player.Id);
+            Player playerInDatabase = await dbContext.Players.FirstWithIdAsync(newPlayer.Id);
 
-            playerInDatabase.UserName.Should().Be(player.UserName);
+            playerInDatabase.UserName.Should().Be(newPlayer.UserName);
         });
     }
 
@@ -90,35 +93,38 @@ public sealed class ClientIdGenerationModesTests
     public async Task Can_create_resource_without_ID_when_supplying_ID_is_allowed()
     {
         // Arrange
-        Game game = _fakers.Game.Generate();
+        Game newGame = _fakers.Game.Generate();
 
         using HttpClient httpClient = _testContext.Factory.CreateClient();
         ClientIdGenerationModesClient apiClient = new(httpClient);
 
-        // Act
-        GamePrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostGameAsync(null, new GamePostRequestDocument
+        var requestBody = new GamePostRequestDocument
         {
             Data = new GameDataInPostRequest
             {
-                Id = null!,
                 Attributes = new GameAttributesInPostRequest
                 {
-                    Title = game.Title,
-                    PurchasePrice = (double)game.PurchasePrice
+                    Title = newGame.Title,
+                    PurchasePrice = (double)newGame.PurchasePrice
                 }
             }
-        }));
+        };
+
+        // Act
+        GamePrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostGameAsync(null, requestBody));
 
         // Assert
         document.ShouldNotBeNull();
-        document.Data.Id.Should().NotBeNullOrEmpty();
+        document.Data.Id.ShouldNotBeNullOrEmpty();
+
+        Guid newGameId = Guid.Parse(document.Data.Id);
 
         await _testContext.RunOnDatabaseAsync(async dbContext =>
         {
-            Game gameInDatabase = await dbContext.Games.FirstWithIdAsync(Guid.Parse(document.Data.Id));
+            Game gameInDatabase = await dbContext.Games.FirstWithIdAsync(newGameId);
 
-            gameInDatabase.Title.Should().Be(game.Title);
-            gameInDatabase.PurchasePrice.Should().Be(game.PurchasePrice);
+            gameInDatabase.Title.Should().Be(newGame.Title);
+            gameInDatabase.PurchasePrice.Should().Be(newGame.PurchasePrice);
         });
     }
 
@@ -126,35 +132,37 @@ public sealed class ClientIdGenerationModesTests
     public async Task Can_create_resource_with_ID_when_supplying_ID_is_allowed()
     {
         // Arrange
-        Game game = _fakers.Game.Generate();
-        game.Id = Guid.NewGuid();
+        Game newGame = _fakers.Game.Generate();
+        newGame.Id = Guid.NewGuid();
 
         using HttpClient httpClient = _testContext.Factory.CreateClient();
         ClientIdGenerationModesClient apiClient = new(httpClient);
 
-        // Act
-        GamePrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostGameAsync(null, new GamePostRequestDocument
+        var requestBody = new GamePostRequestDocument
         {
             Data = new GameDataInPostRequest
             {
-                Id = game.StringId!,
+                Id = newGame.StringId!,
                 Attributes = new GameAttributesInPostRequest
                 {
-                    Title = game.Title,
-                    PurchasePrice = (double)game.PurchasePrice
+                    Title = newGame.Title,
+                    PurchasePrice = (double)newGame.PurchasePrice
                 }
             }
-        }));
+        };
+
+        // Act
+        GamePrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostGameAsync(null, requestBody));
 
         // Assert
         document.Should().BeNull();
 
         await _testContext.RunOnDatabaseAsync(async dbContext =>
         {
-            Game gameInDatabase = await dbContext.Games.FirstWithIdAsync(game.Id);
+            Game gameInDatabase = await dbContext.Games.FirstWithIdAsync(newGame.Id);
 
-            gameInDatabase.Title.Should().Be(game.Title);
-            gameInDatabase.PurchasePrice.Should().Be(game.PurchasePrice);
+            gameInDatabase.Title.Should().Be(newGame.Title);
+            gameInDatabase.PurchasePrice.Should().Be(newGame.PurchasePrice);
         });
     }
 
@@ -162,33 +170,36 @@ public sealed class ClientIdGenerationModesTests
     public async Task Can_create_resource_without_ID_when_supplying_ID_is_forbidden()
     {
         // Arrange
-        PlayerGroup playerGroup = _fakers.Group.Generate();
+        PlayerGroup newPlayerGroup = _fakers.Group.Generate();
 
         using HttpClient httpClient = _testContext.Factory.CreateClient();
         ClientIdGenerationModesClient apiClient = new(httpClient);
 
-        // Act
-        PlayerGroupPrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostPlayerGroupAsync(null,
-            new PlayerGroupPostRequestDocument
+        var requestBody = new PlayerGroupPostRequestDocument
+        {
+            Data = new PlayerGroupDataInPostRequest
             {
-                Data = new PlayerGroupDataInPostRequest
+                Attributes = new PlayerGroupAttributesInPostRequest
                 {
-                    Attributes = new PlayerGroupAttributesInPostRequest
-                    {
-                        Name = playerGroup.Name
-                    }
+                    Name = newPlayerGroup.Name
                 }
-            }));
+            }
+        };
+
+        // Act
+        PlayerGroupPrimaryResponseDocument? document = await ApiResponse.TranslateAsync(() => apiClient.PostPlayerGroupAsync(null, requestBody));
 
         // Assert
         document.ShouldNotBeNull();
-        document.Data.Id.Should().NotBeNullOrEmpty();
+        document.Data.Id.ShouldNotBeNullOrEmpty();
+
+        long newPlayerGroupId = long.Parse(document.Data.Id);
 
         await _testContext.RunOnDatabaseAsync(async dbContext =>
         {
-            PlayerGroup playerGroupInDatabase = await dbContext.PlayerGroups.FirstWithIdAsync(long.Parse(document.Data.Id));
+            PlayerGroup playerGroupInDatabase = await dbContext.PlayerGroups.FirstWithIdAsync(newPlayerGroupId);
 
-            playerGroupInDatabase.Name.Should().Be(playerGroup.Name);
+            playerGroupInDatabase.Name.Should().Be(newPlayerGroup.Name);
         });
     }
 }
