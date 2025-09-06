@@ -44,6 +44,7 @@ namespace OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models
             var mappingValue = parseNode.GetChildNode("openapi:discriminator")?.GetStringValue();
             return mappingValue switch
             {
+                "coffeeSummaries" => new global::OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models.AttributesInCoffeeSummaryResponse(),
                 "cupOfCoffees" => new global::OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models.AttributesInCupOfCoffeeResponse(),
                 _ => new global::OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models.AttributesInResponse(),
             };

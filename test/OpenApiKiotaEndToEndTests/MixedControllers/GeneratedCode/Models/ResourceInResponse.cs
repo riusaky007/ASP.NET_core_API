@@ -51,6 +51,7 @@ namespace OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models
             var mappingValue = parseNode.GetChildNode("type")?.GetStringValue();
             return mappingValue switch
             {
+                "coffeeSummaries" => new global::OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models.DataInCoffeeSummaryResponse(),
                 "cupOfCoffees" => new global::OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models.DataInCupOfCoffeeResponse(),
                 _ => new global::OpenApiKiotaEndToEndTests.MixedControllers.GeneratedCode.Models.ResourceInResponse(),
             };
